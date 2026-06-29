@@ -113,7 +113,12 @@ BEGIN
             END,
             CAST(prd_start_dt AS DATE),
             CAST(LEAD(prd_end_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt) - 1 AS DATE)
-        FROM bronze.crm_prd_info;
+        FROM (
+        SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY prd_key ORDER BY prd_start_dt DESC) AS rn
+        FROM bronze.crm_prd_info
+        ) t
+        WHERE rn = 1;
 
         SET @END_TIME = GETDATE();
         PRINT '>> LOAD DURATION: ' + CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + ' SECONDS';
